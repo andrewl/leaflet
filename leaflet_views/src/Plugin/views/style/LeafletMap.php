@@ -176,7 +176,8 @@ class LeafletMap extends StylePluginBase implements ContainerFactoryPluginInterf
           ->getFieldStorageDefinitions($handler->getEntityType());
         $field_storage_definition = $field_storage_definitions[$handler->definition['field_name']];
 
-        if ($field_storage_definition->getType() == 'geofield') {
+        if ($field_storage_definition->getType() == 'geofield' ||
+            $field_storage_definition->getType() == 'geolocation') {
           $fields_geo_data[$field_id] = $label;
         }
       }
@@ -399,13 +400,37 @@ class LeafletMap extends StylePluginBase implements ContainerFactoryPluginInterf
    * Renders the View.
    */
   public function render() {
-    $data = array();
+    $data = [];
+    $geolocation_data = [];
     $geofield_name = $this->options['data_source'];
     if ($this->options['data_source']) {
       $this->renderFields($this->view->result);
       foreach ($this->view->result as $id => $result) {
 
-        $geofield_value = $this->getFieldValue($id, $geofield_name);
+        if (\Drupal::moduleHandler()->moduleExists('geolocation')) {
+          if ($this->view->field[$geofield_name] instanceof \Drupal\geolocation\Plugin\views\field\GeolocationField) {
+          /** @var \Drupal\geolocation\Plugin\views\field\GeolocationField $geolocation_field */
+            $geolocation_field = $this->view->field[$geofield_name];
+            $geo_items = $geolocation_field->getItems($result);
+            $geolocation_data = [];
+            foreach ($geo_items as $delta => $item) {
+              $geolocation = $item['raw'];
+              $geolocation_data[] = [
+                'type' => 'point',
+                'lat' => (float) $geolocation->lat,
+                'lon' => (float) $geolocation->lng,
+              ];
+            }
+          }
+        }
+
+        // It's a geolocation field, so replace the points with it's value.
+        if ($geolocation_data) {
+          $geofield_value = $geolocation_data;
+        }
+        else {
+          $geofield_value = $this->getFieldValue($id, $geofield_name);
+        }
 
         if (empty($geofield_value)) {
           // In case the result is not among the raw results, get it from the
@@ -413,7 +438,7 @@ class LeafletMap extends StylePluginBase implements ContainerFactoryPluginInterf
           $geofield_value = $this->rendered_fields[$id][$geofield_name];
         }
         if (!empty($geofield_value)) {
-          $points = leaflet_process_geofield($geofield_value);
+          $points = $geolocation_data ? $geofield_value : leaflet_process_geofield($geofield_value);
 
           // Render the entity with the selected view mode.
           if ($this->options['description_field'] === '#rendered_entity' && is_object($result)) {

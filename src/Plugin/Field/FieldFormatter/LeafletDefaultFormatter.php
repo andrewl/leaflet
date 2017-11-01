@@ -17,7 +17,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  *   id = "leaflet_formatter_default",
  *   label = @Translation("Leaflet map"),
  *   field_types = {
- *     "geofield"
+ *     "geofield",
+ *     "geolocation"
  *   }
  * )
  */
@@ -220,7 +221,16 @@ class LeafletDefaultFormatter extends FormatterBase {
     $elements = array();
     foreach ($items as $delta => $item) {
 
-      $features = leaflet_process_geofield($item->value);
+      if ($this->fieldDefinition->getType() == 'geofield') {
+        $features = leaflet_process_geofield($item->value);
+      }
+      else if ($this->fieldDefinition->getType() == 'geolocation') {
+        $features = [[
+            'type' => 'point',
+            'lat' => $item->lat,
+            'lon' => $item->lng,
+        ]];
+      }
 
       // If only a single feature, set the popup content to the entity title.
       if ($settings['popup'] && count($items) == 1) {
