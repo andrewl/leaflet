@@ -158,12 +158,13 @@ class LeafletMarker extends RowPluginBase implements ContainerFactoryPluginInter
     foreach ($this->displayHandler->getHandlers('field') as $field_id => $handler) {
       $label = $handler->adminLabel() ?: $field_id;
       $fields[$field_id] = $label;
-      if (is_a($handler, 'Drupal\views\Plugin\views\field\Field')) {
+      if (is_a($handler, 'Drupal\views\Plugin\views\field\EntityField')) {
         $field_storage_definitions = $this->entityFieldManager
           ->getFieldStorageDefinitions($handler->getEntityType());
         $field_storage_definition = $field_storage_definitions[$handler->definition['field_name']];
 
-        if ($field_storage_definition->getType() == 'geofield') {
+        if (($field_storage_definition->getType() == 'geofield') ||
+            ($field_storage_definition->getType() == 'geolocation')) {
           $fields_geo_data[$field_id] = $label;
         }
       }
@@ -244,15 +245,30 @@ class LeafletMarker extends RowPluginBase implements ContainerFactoryPluginInter
    * {@inheritdoc}
    */
   public function render($row) {
-    $geofield_value = $this->view->getStyle()->getFieldValue($row->index, $this->options['data_source']);
 
-    if (empty($geofield_value)) {
-      return FALSE;
+    //@todo this is now super brittle.
+    $result = NULL;
+    $geo_fieldname = $this->options['data_source'];
+
+    if (get_class($this->view->field[$geo_fieldname]) == 'Drupal\geolocation\Plugin\views\field\GeolocationField') {
+      $geolocation_field = $this->view->field[$geo_fieldname];
+      $entity = $geolocation_field->getEntity($row);
+      if (isset($entity->{$geolocation_field->definition['field_name']})) {
+        $result = leaflet_process_geolocation($entity->{$geolocation_field->definition['field_name']});
+      }
+    }
+    else {
+      $geofield_value = $this->view->getStyle()->getFieldValue($row->index, $geo_fieldname);
+      if (!empty($geofield_value)) {
+        // @todo This assumes that the user has selected WKT as the geofield output
+        // formatter in the views field settings, and fails otherwise. Very brittle.
+        $result = leaflet_process_geofield($geofield_value);
+      }
     }
 
-    // @todo This assumes that the user has selected WKT as the geofield output
-    // formatter in the views field settings, and fails otherwise. Very brittle.
-    $result = leaflet_process_geofield($geofield_value);
+    if (empty($result)) {
+      return FALSE;
+    }
 
     // Convert the list of geo data points into a list of leaflet markers.
     return $this->renderLeafletMarkers($result, $row);

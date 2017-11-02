@@ -1,26 +1,19 @@
-
 This module provides integration with Leaflet map scripting library,
 http://leafletjs.com
 
-To use it you must download the leaflet JS library from either
-http://leafletjs.com/download.html or GitHub,https://github.com/Leaflet/Leaflet
+*NB This is a fork of the project on drupal.org which includes some patches for
+critical and non-critical issues including:
+- "LeafletMarker could not recognize geofield" (https://www.drupal.org/node/2839538)
+- "Style Leaflet requires a leaflet map to be configured" (https://www.drupal.org/node/2683221)
+- "Integration with Geolocation" (https://www.drupal.org/node/2720901)
+
+To use it you must have the Leaflet library installed. You can do this manually, or using composer. (see below)
 
 In its current state, maps can be rendered as follows:
 o via the included field formatter for Geofield (drupal.org/project/geofield)
+and Geolocation (drupal.org/project/geolocation)
 o via Views (and Geofield)
 o by using the API directly.
-
-
-Installation (manual)
----------------------
-
-1. Normal Drupal module installation
-
-2. Download the Leaflet library from http://leafletjs.com/. Leaflet 1.0.2 or
-   higher is recommended
-
-3. Enable leaflet_views for using Views and Leaflet (see below), or use the
-   display formatters for fields display.
 
 
 Installation (composer)
@@ -28,7 +21,7 @@ Installation (composer)
 
 1. Run $ composer require drupal/leaflet:~1.0
 
-2. Add the proper repository to your composer.json file to be able to require
+2. Add the proper repository to the composer.json file in your project root (NB not the module composer.json) to be able to require
    the JS library:
     {
       "type": "package",
@@ -47,6 +40,18 @@ Installation (composer)
 
 4. Enable Drupal modules as usual.
 
+Installation (manual)
+---------------------
+
+1. Normal Drupal module installation
+
+2. Download the Leaflet library from http://leafletjs.com/. Leaflet 1.0.2 or
+   higher is recommended
+
+3. Enable leaflet_views for using Views and Leaflet (see below), or use the
+   display formatters for fields display.
+
+
 
 API Usage
 ---------
@@ -58,7 +63,7 @@ An associative array defining a map. See hook_leaflet_map_info(). The module
 defines a default map with a OpenStreet Maps base layer.
 
 $features
-This is the tricky pary. This is an associative array of all the features you
+This is the tricky part. This is an associative array of all the features you
 want to plot on the map. A feature can be a point, linestring, polygon,
 multipolygon, multipolygon, or json object. Additionally, features can be
 grouped into layer groups so they can be controlled together,
@@ -103,7 +108,7 @@ Views integration
 
 To render a map using Views, enable the module leaflet_views.
 
-You need to add at least one geofield to the Fields list, and select the Leaflet
+You need to add at least one geofield or geolocation field to the Fields list, and select the Leaflet
 Map style in Format.
 
 In the settings of the style, select the geofield as the Data Source and select

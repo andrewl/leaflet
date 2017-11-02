@@ -135,17 +135,6 @@ class Leaflet extends StylePluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validate() {
-    $errors = parent::validate();
-    if (empty($this->options['map'])) {
-      $errors[] = $this->t('Style @style requires a leaflet map to be configured.', array('@style' => $this->definition['title']));
-    }
-    return $errors;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   protected function defineOptions() {
     $options = parent::defineOptions();
     $options['map'] = array('default' => '');

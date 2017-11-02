@@ -126,6 +126,8 @@ function leaflet_leaflet_map_info() {
  *   $item['wkt'] field.
  *
  * @return array
+ *
+ * @see leaflet_process_geolocation
  */
 function leaflet_process_geofield($items = array()) {
 
@@ -198,6 +200,33 @@ function leaflet_process_geofield($items = array()) {
   }
 
   return $data;
+}
+
+/**
+ * Convert a geolocation into an array of map points.
+ *
+ * The map points can then be fed into leaflet_render_map().
+ *
+ * @param mixed $items
+ *   A single vlaue or array of geolocation values.
+ *
+ * @return array
+ * 
+ * @see leaflet_process_geofield
+ */
+function leaflet_process_geolocation($items = array()) {
+
+  $data = [];
+
+  foreach($items as $delta => $item) {
+
+    $data[] = ['type' => 'point',
+               'lat' => $item->lat,
+               'lon' => $item->lng];
+  }
+
+  return $data;
+
 }
 
 /**
